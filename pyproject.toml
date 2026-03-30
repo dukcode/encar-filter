@@ -1,0 +1,8 @@
+[project]
+name = "encar-filter"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.32.5",
+    "tqdm>=4.67.3",
+]
