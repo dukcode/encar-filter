@@ -5,44 +5,121 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --text: #16181d;
+    --muted: #656c78;
+    --faint: #a3a9b4;
+    --border: #e4e6ea;
+    --border-strong: #d2d6dd;
+    --head-bg: #f1f2f5;
+    --head-hover: #e6e8ed;
+    --row-alt: #fafbfc;
+    --row-hover: #eff4ff;
+    --sorted: rgba(37, 99, 235, 0.07);
+    --accent: #2563eb;
+    --accent-soft: rgba(37, 99, 235, 0.11);
+    --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 28px rgba(16, 24, 40, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131417;
+      --panel: #1c1d21;
+      --text: #e8e9ec;
+      --muted: #a0a5b0;
+      --faint: #6d727c;
+      --border: #2e3037;
+      --border-strong: #3c3f47;
+      --head-bg: #24262b;
+      --head-hover: #2d2f36;
+      --row-alt: #1f2024;
+      --row-hover: #262a33;
+      --sorted: rgba(122, 167, 255, 0.09);
+      --accent: #7aa7ff;
+      --accent-soft: rgba(122, 167, 255, 0.15);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.28);
+    }
+  }
+
+  * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    margin: 0; padding: 32px 20px; background: #fafafa; color: #1a1a1a;
+    margin: 0 auto; padding: 40px 20px 64px; max-width: 1080px;
+    background: var(--bg); color: var(--text);
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
   }
-  h1 { font-size: 20px; margin: 0 0 6px; }
-  .summary { font-size: 14px; color: #666; margin-bottom: 20px; }
-  .hint { font-size: 13px; color: #888; margin-bottom: 8px; }
-  .sort-state { font-size: 13px; color: #666; margin: 0 0 12px; min-height: 18px; }
-  .sort-state b { font-weight: 600; }
-  .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #e2e2e2; border-radius: 8px; }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  th, td { padding: 10px 14px; text-align: right; white-space: nowrap; border-bottom: 1px solid #eee; }
+
+  h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 6px; }
+  .summary { font-size: 14px; color: var(--muted); margin: 0 0 18px; }
+
+  .hint {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; margin: 0 0 12px;
+    font-size: 13px; color: var(--muted);
+  }
+  .hint b { color: var(--text); font-weight: 600; }
+  kbd {
+    font: inherit; font-size: 12px; padding: 1px 6px; margin: 0 1px;
+    border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 6px;
+    background: var(--head-bg); color: var(--text);
+  }
+
+  .sort-state {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    margin: 0 0 14px; min-height: 26px; font-size: 13px; color: var(--muted);
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 11px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  }
+  .chip .rank { opacity: 0.75; font-weight: 500; }
+
+  .table-wrap {
+    overflow-x: auto; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow);
+  }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
+  th, td { padding: 12px 16px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); }
   th:first-child, td:first-child, th:last-child, td:last-child { text-align: center; }
+  td { font-variant-numeric: tabular-nums; }
+
   thead th {
-    position: sticky; top: 0; background: #f4f4f5; font-weight: 600;
-    border-bottom: 1px solid #ddd; user-select: none;
+    position: sticky; top: 0; z-index: 1;
+    background: var(--head-bg); color: var(--muted);
+    font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+    border-bottom: 1px solid var(--border-strong); user-select: none;
   }
-  thead th[data-type] { cursor: pointer; }
-  thead th[data-type]:hover { background: #e9e9eb; }
-  thead th[data-type]::after { content: " ↕"; color: #bbb; }
-  thead th[data-order="asc"]::after { content: " ↑" attr(data-rank); color: #1a1a1a; }
-  thead th[data-order="desc"]::after { content: " ↓" attr(data-rank); color: #1a1a1a; }
-  tbody tr:hover { background: #f8f8fb; }
+  thead th[data-type] { cursor: pointer; transition: background 0.12s ease, color 0.12s ease; }
+  thead th[data-type]:hover { background: var(--head-hover); color: var(--text); }
+  thead th[data-order] { color: var(--text); }
+  thead th[data-type]::after { content: " ↕"; color: var(--faint); }
+  thead th[data-order="asc"]::after { content: " ↑" attr(data-rank); color: var(--accent); }
+  thead th[data-order="desc"]::after { content: " ↓" attr(data-rank); color: var(--accent); }
+
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+  tbody tr:hover { background: var(--row-hover); }
   tbody tr:last-child td { border-bottom: none; }
-  a { color: #2563eb; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  @media (prefers-color-scheme: dark) {
-    body { background: #17171a; color: #e6e6e6; }
-    .summary, .hint { color: #9a9a9a; }
-    .sort-state { color: #b4b4b4; }
-    .table-wrap { background: #1f1f23; border-color: #33333a; }
-    th, td { border-bottom-color: #2b2b31; }
-    thead th { background: #26262b; border-bottom-color: #38383f; }
-    thead th[data-type]:hover { background: #2f2f36; }
-    thead th[data-order="asc"]::after, thead th[data-order="desc"]::after { color: #e6e6e6; }
-    tbody tr:hover { background: #26262b; }
-    a { color: #7aa7ff; }
+  tbody td.sorted { background: var(--sorted); }
+  /* 사고 이력이 없는 값은 옅게 */
+  tbody td:nth-child(4)[data-value="0"], tbody td:nth-child(5)[data-value="0"] { color: var(--faint); }
+
+  td a {
+    display: inline-block; padding: 4px 13px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  td a:hover { background: var(--accent); color: #fff; }
+
+  @media (max-width: 640px) {
+    body { padding: 24px 12px 40px; }
+    h1 { font-size: 19px; }
+    th, td { padding: 10px 11px; font-size: 13px; }
+    .table-wrap { border-radius: 10px; }
   }
 </style>
 </head>
@@ -51,7 +128,7 @@
 <p class="summary">__SUMMARY__</p>
 <p class="hint">
   열 제목을 클릭하면 해당 항목 하나로 정렬됩니다. (다시 클릭하면 오름차순/내림차순 전환)<br>
-  <b>Shift(또는 ⌘) + 클릭</b>하면 정렬 조건이 순서대로 <b>추가</b>됩니다.
+  <kbd>Shift</kbd> 또는 <kbd>⌘</kbd> + 클릭하면 정렬 조건이 순서대로 <b>추가</b>됩니다.
   (예: 명의 변경 ↑ → 가격 ↓) 추가된 조건은 오름차순 → 내림차순 → 해제 순으로 바뀝니다.
 </p>
 <p class="sort-state" id="sort-state"></p>
@@ -123,7 +200,7 @@ __ROWS__
     return Number(a.dataset.origin) - Number(b.dataset.origin);
   }
 
-  function render() {
+  function renderHeaders() {
     headers.forEach(function (th) {
       delete th.dataset.order;
       delete th.dataset.rank;
@@ -133,17 +210,36 @@ __ROWS__
       th.dataset.order = key.asc ? 'asc' : 'desc';
       if (sortKeys.length > 1) th.dataset.rank = RANK_MARKS[i] || String(i + 1);
     });
+  }
 
-    stateBox.innerHTML = sortKeys.length
-      ? '정렬: ' + sortKeys.map(function (key) {
-          return '<b>' + headers[key.idx].textContent + '</b> ' + (key.asc ? '오름차순' : '내림차순');
-        }).join(' → ')
-      : '정렬 없음 (원래 순서)';
+  function renderState() {
+    if (!sortKeys.length) {
+      stateBox.innerHTML = '정렬 없음 (원래 순서)';
+      return;
+    }
+    stateBox.innerHTML = '정렬 ' + sortKeys.map(function (key, i) {
+      var mark = sortKeys.length > 1 ? '<span class="rank">' + (RANK_MARKS[i] || i + 1) + '</span>' : '';
+      return '<span class="chip">' + mark + headers[key.idx].textContent +
+        ' ' + (key.asc ? '↑' : '↓') + '</span>';
+    }).join(' ');
+  }
 
+  function renderRows() {
     var sorted = rows.slice().sort(compare);
     var fragment = document.createDocumentFragment();
-    sorted.forEach(function (row) { fragment.appendChild(row); });
+    sorted.forEach(function (row) {
+      for (var i = 0; i < row.cells.length; i++) {
+        row.cells[i].className = keyIndex(i) !== -1 ? 'sorted' : '';
+      }
+      fragment.appendChild(row);
+    });
     tbody.appendChild(fragment);
+  }
+
+  function render() {
+    renderHeaders();
+    renderState();
+    renderRows();
   }
 
   headers.forEach(function (th, idx) {
