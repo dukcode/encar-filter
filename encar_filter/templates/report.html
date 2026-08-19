@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    margin: 0; padding: 32px 20px; background: #fafafa; color: #1a1a1a;
+  }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .summary { font-size: 14px; color: #666; margin-bottom: 20px; }
+  .hint { font-size: 13px; color: #888; margin-bottom: 12px; }
+  .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #e2e2e2; border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 10px 14px; text-align: right; white-space: nowrap; border-bottom: 1px solid #eee; }
+  th:first-child, td:first-child, th:last-child, td:last-child { text-align: center; }
+  thead th {
+    position: sticky; top: 0; background: #f4f4f5; font-weight: 600;
+    border-bottom: 1px solid #ddd; user-select: none;
+  }
+  thead th[data-type] { cursor: pointer; }
+  thead th[data-type]:hover { background: #e9e9eb; }
+  thead th[data-type]::after { content: " ↕"; color: #bbb; }
+  thead th[data-order="asc"]::after { content: " ↑"; color: #1a1a1a; }
+  thead th[data-order="desc"]::after { content: " ↓"; color: #1a1a1a; }
+  tbody tr:hover { background: #f8f8fb; }
+  tbody tr:last-child td { border-bottom: none; }
+  a { color: #2563eb; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #17171a; color: #e6e6e6; }
+    .summary, .hint { color: #9a9a9a; }
+    .table-wrap { background: #1f1f23; border-color: #33333a; }
+    th, td { border-bottom-color: #2b2b31; }
+    thead th { background: #26262b; border-bottom-color: #38383f; }
+    thead th[data-type]:hover { background: #2f2f36; }
+    thead th[data-order="asc"]::after, thead th[data-order="desc"]::after { color: #e6e6e6; }
+    tbody tr:hover { background: #26262b; }
+    a { color: #7aa7ff; }
+  }
+</style>
+</head>
+<body>
+<h1>__TITLE__</h1>
+<p class="summary">__SUMMARY__</p>
+<p class="hint">열 제목을 클릭하면 해당 항목으로 정렬됩니다. (다시 클릭하면 오름차순/내림차순 전환)</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+  <th data-type="number" data-order="asc">번호</th>
+  <th data-type="number">명의 변경</th>
+  <th data-type="number">가격</th>
+  <th data-type="number">사고 횟수</th>
+  <th data-type="number">평균 피해액</th>
+  <th data-type="number">마일리지</th>
+  <th>링크</th>
+</tr>
+</thead>
+<tbody>
+__ROWS__
+</tbody>
+</table>
+</div>
+<script>
+(function () {
+  var table = document.querySelector('table');
+  var tbody = table.tBodies[0];
+  var headers = table.querySelectorAll('thead th');
+
+  headers.forEach(function (th, idx) {
+    if (!th.dataset.type) return;
+    th.addEventListener('click', function () {
+      var asc = th.dataset.order !== 'asc';
+      headers.forEach(function (other) { delete other.dataset.order; });
+      th.dataset.order = asc ? 'asc' : 'desc';
+
+      var dir = asc ? 1 : -1;
+      var rows = Array.prototype.slice.call(tbody.rows);
+      rows.sort(function (a, b) {
+        var av = a.cells[idx].dataset.value;
+        var bv = b.cells[idx].dataset.value;
+        if (th.dataset.type === 'number') return (Number(av) - Number(bv)) * dir;
+        return String(av).localeCompare(String(bv), 'ko') * dir;
+      });
+      rows.forEach(function (row) { tbody.appendChild(row); });
+    });
+  });
+})();
+</script>
+</body>
+</html>
