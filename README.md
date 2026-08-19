@@ -72,6 +72,27 @@ http://www.encar.com/dc/dc_carsearchlist.do?carType=kor#!%7B%22action%22%3A%22(A
 
 `#!`가 없는 URL을 입력하면 검색 조건을 찾을 수 없다는 메시지와 함께 종료됩니다.
 
+## 프로젝트 구조
+
+책임에 따라 모듈을 나눴습니다.
+
+```
+encar.py                      진입점 (CLI 실행)
+encar_filter/
+├── cli.py                    사용자 입출력과 실행 흐름
+├── collector.py              검색 → 상세 조회 → 필터링 파이프라인
+├── api.py                    엔카 API HTTP 호출
+├── urls.py                   검색 페이지 URL 파싱, API/상세 URL 생성
+├── filters.py                보험 이력 해석과 필터 조건 (CarFilter)
+├── models.py                 CarListing, InspectedCar 데이터 구조
+├── report.py                 HTML 리포트 렌더링
+└── templates/report.html     리포트 템플릿 (CSS/JS 포함)
+```
+
+필터 기준은 `filters.CarFilter` 한곳에 모여 있습니다. 명의 변경 허용 횟수나 영업용 제외 여부를 바꾸려면 `cli.py`에서 `CarFilter(max_owner_change_cnt=3, exclude_commercial=False)`처럼 넘기면 됩니다.
+
+표의 모양과 정렬 동작은 `templates/report.html`만 고치면 되고, 파이썬 코드는 건드릴 필요가 없습니다.
+
 ## 요구사항
 
 - Python >= 3.9
