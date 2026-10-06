@@ -4,6 +4,14 @@ from dataclasses import dataclass
 UNKNOWN_OWNER_CHANGE_CNT = 999
 
 
+def car_year(record_info):
+    """보험 이력 화면의 연식. 값이 없거나 올바른 4자리 연도가 아니면 None."""
+    value = str((record_info or {}).get('year') or '').strip()
+    if len(value) == 4 and value.isascii() and value.isdigit() and int(value) > 0:
+        return int(value)
+    return None
+
+
 def is_commercial_use(record_info):
     """렌트카/영업용 여부 확인"""
     if not record_info:

@@ -6,6 +6,7 @@ SEARCH_API = 'https://api.encar.com/search/car/list/general'
 VEHICLE_API = 'https://api.encar.com/v1/readside/vehicle'
 RECORD_API = 'https://api.encar.com/v1/readside/record/vehicle'
 DETAIL_PAGE = 'https://fem.encar.com/cars/detail'
+PICTURE_BASE = 'https://ci.encar.com/carpicture'
 
 DEFAULT_SORT = 'ModifiedDate'
 
@@ -55,3 +56,23 @@ def build_detail_url(car_id, position=1):
         f'&adv_attribute=hs_ad&wtClick_forList=019'
         f'&advClickPosition=imp_normal_p1_g{position}'
     )
+
+
+def build_thumbnail_url(photos):
+    """차량 정보 API의 실제 사진 경로로 대표 외관 썸네일 URL 생성."""
+    available = [photo for photo in (photos or []) if photo.get('path')]
+    if not available:
+        return None
+    photo = next((photo for photo in available if photo.get('code') == '001'), None)
+    if photo is None:
+        photo = next((photo for photo in available if photo.get('type') == 'OUTER'), available[0])
+    path = quote(photo['path'].lstrip('/'), safe='/')
+    url = (
+        f'{PICTURE_BASE}/{path}'
+        '?impolicy=heightRate&rh=192&cw=320&ch=192&cg=Center'
+        '&wtmk=https://ci.encar.com/wt_mark/w_mark_04.png'
+        '&wtmkg=SouthEast&wtmkw=70&wtmkh=30'
+    )
+    if photo.get('updateDateTime'):
+        url += '&t=' + quote(photo['updateDateTime'], safe='')
+    return url

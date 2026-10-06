@@ -1,8 +1,8 @@
 """검색 → 상세 조회 → 필터링 파이프라인."""
 from .api import PAGE_SIZE
-from .filters import CarFilter, accident_info, avg_accident_cost, owner_change_cnt
+from .filters import CarFilter, accident_info, avg_accident_cost, car_year, owner_change_cnt
 from .models import CarListing, InspectedCar
-from .urls import build_detail_url
+from .urls import build_detail_url, build_thumbnail_url
 
 
 class CarCollector:
@@ -49,4 +49,6 @@ class CarCollector:
             accident_cnt=accident_info(record_info)[0],
             avg_accident_cost=avg_accident_cost(record_info),
             detail_url=build_detail_url(listing.car_id, position),
+            year=car_year(record_info),
+            thumbnail_url=build_thumbnail_url(vehicle_info.get('photos')),
         )

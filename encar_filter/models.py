@@ -1,5 +1,6 @@
 """도메인 데이터 구조."""
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -20,6 +21,8 @@ class InspectedCar:
     accident_cnt: int
     avg_accident_cost: int  # 사고 1건당 평균 피해액 (만원)
     detail_url: str
+    year: Optional[int] = None  # 보험 이력의 연식 (등록 연월과 다름)
+    thumbnail_url: Optional[str] = None
 
     @property
     def price(self):

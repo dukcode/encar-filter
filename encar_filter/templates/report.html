@@ -46,7 +46,7 @@
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    margin: 0 auto; padding: 40px 20px 64px; max-width: 1080px;
+    margin: 0 auto; padding: 40px 20px 64px; max-width: 1480px;
     background: var(--bg); color: var(--text);
     line-height: 1.5; -webkit-font-smoothing: antialiased;
   }
@@ -105,7 +105,8 @@
   tbody tr:last-child td { border-bottom: none; }
   tbody td.sorted { background: var(--sorted); }
   /* 사고 이력이 없는 값은 옅게 */
-  tbody td:nth-child(4)[data-value="0"], tbody td:nth-child(5)[data-value="0"] { color: var(--faint); }
+  tbody td:nth-child(6)[data-value="0"], tbody td:nth-child(7)[data-value="0"],
+  tbody td[data-value=""] { color: var(--faint); }
 
   td a {
     display: inline-block; padding: 4px 13px; border-radius: 999px;
@@ -114,6 +115,15 @@
     transition: background 0.12s ease, color 0.12s ease;
   }
   td a:hover { background: var(--accent); color: #fff; }
+  .thumbnail-cell { padding: 8px 12px; text-align: center; }
+  td a.thumbnail-link { padding: 0; border-radius: 8px; overflow: hidden; vertical-align: middle; }
+  .thumbnail-link img { display: block; width: 160px; height: 96px; object-fit: cover; }
+  .thumbnail-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    width: 160px; height: 96px; border-radius: 8px;
+    background: var(--head-bg); color: var(--muted); font-size: 12px;
+  }
+  .thumbnail-link [hidden] { display: none; }
 
   @media (max-width: 640px) {
     body { padding: 24px 12px 40px; }
@@ -137,6 +147,8 @@
 <thead>
 <tr>
   <th data-type="number" data-order="asc">번호</th>
+  <th class="thumbnail-cell">사진</th>
+  <th data-type="number">연식</th>
   <th data-type="number">명의 변경</th>
   <th data-type="number">가격</th>
   <th data-type="number">사고 횟수</th>
@@ -191,6 +203,11 @@ __ROWS__
       var key = sortKeys[i];
       var av = a.cells[key.idx].dataset.value;
       var bv = b.cells[key.idx].dataset.value;
+      // 미확인 값은 정렬 방향과 관계없이 확인된 값 뒤에 둔다.
+      var aMissing = av === undefined || av === '';
+      var bMissing = bv === undefined || bv === '';
+      if (aMissing !== bMissing) return aMissing ? 1 : -1;
+      if (aMissing) continue;
       var diff = headers[key.idx].dataset.type === 'number'
         ? Number(av) - Number(bv)
         : String(av).localeCompare(String(bv), 'ko');
@@ -229,7 +246,7 @@ __ROWS__
     var fragment = document.createDocumentFragment();
     sorted.forEach(function (row) {
       for (var i = 0; i < row.cells.length; i++) {
-        row.cells[i].className = keyIndex(i) !== -1 ? 'sorted' : '';
+        row.cells[i].classList.toggle('sorted', keyIndex(i) !== -1);
       }
       fragment.appendChild(row);
     });
