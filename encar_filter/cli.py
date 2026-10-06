@@ -41,14 +41,15 @@ def main():
         f'총 {total}개의 결과에서 영업용도 사용 이력이 없고 '
         f'명의 변경 횟수가 {car_filter.max_owner_change_cnt}회 이하인 차 {len(cars)}대입니다.'
     )
-    output_path = _build_output_path(file_name)
+    created_at = datetime.now()
+    output_path = _build_output_path(file_name, created_at)
     with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(render_report(file_name, summary, cars))
+        f.write(render_report(file_name, summary, cars, created_at))
 
     print(f'파일 생성이 완료되었습니다. ({output_path})')
 
 
-def _build_output_path(file_name):
+def _build_output_path(file_name, created_at=None):
     os.makedirs(RESULT_DIR, exist_ok=True)
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
+    timestamp = (created_at or datetime.now()).strftime('%Y-%m-%d_%H_%M_%S')
     return os.path.join(RESULT_DIR, f'{timestamp}_{file_name}.html')

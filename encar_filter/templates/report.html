@@ -65,6 +65,23 @@
     border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 6px;
     background: var(--head-bg); color: var(--text);
   }
+  .annual-filter {
+    min-width: 0; margin: 0 0 16px; padding: 12px 16px;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--panel);
+  }
+  .annual-filter legend { padding: 0 6px; font-size: 14px; font-weight: 600; }
+  .filter-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+  .filter-controls label { display: inline-flex; align-items: center; gap: 6px; }
+  .filter-controls input {
+    width: 120px; padding: 7px 9px; border: 1px solid var(--border-strong);
+    border-radius: 6px; background: var(--bg); color: var(--text); font: inherit;
+  }
+  .filter-controls input[aria-invalid="true"] { border-color: var(--accent); }
+  .annual-note, .filter-error, .filter-count { font-size: 12px; color: var(--muted); }
+  .annual-note { margin: 10px 0 0; }
+  .filter-error { margin: 8px 0 0; color: var(--text); }
+  .annual-midpoint { display: block; font-size: 12px; color: var(--muted); }
+  .empty-state { text-align: center; color: var(--muted); font-size: 14px; }
 
   .sort-state {
     display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
@@ -77,6 +94,13 @@
     font-size: 12.5px; font-weight: 600; white-space: nowrap;
   }
   .chip .rank { opacity: 0.75; font-weight: 500; }
+  .filter-reset {
+    font: inherit; color: inherit; cursor: pointer;
+    border: 1px solid var(--border-strong); border-radius: 6px;
+    background: var(--panel); padding: 2px 7px; min-width: 28px; min-height: 28px;
+  }
+  .filter-reset:hover { background: var(--head-hover); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
   .table-wrap {
     overflow-x: auto; background: var(--panel);
@@ -136,6 +160,23 @@
 <body>
 <h1>__TITLE__</h1>
 <p class="summary">__SUMMARY__</p>
+<fieldset class="annual-filter">
+  <legend>연평균 마일리지 · 중앙값 필터</legend>
+  <div class="filter-controls">
+    <label for="annual-min">최소 <input id="annual-min" type="number" min="0" step="1" inputmode="numeric" placeholder="제한 없음" aria-describedby="annual-note filter-error"></label>
+    <span>~</span>
+    <label for="annual-max">최대 <input id="annual-max" type="number" min="0" step="1" inputmode="numeric" placeholder="제한 없음" aria-describedby="annual-note filter-error"></label>
+    <span>km/년</span>
+    <button type="button" class="filter-reset" id="filter-reset">필터 초기화</button>
+    <span class="filter-count" id="filter-count" role="status" aria-live="polite"></span>
+  </div>
+  <p class="filter-error" id="filter-error" role="alert" hidden></p>
+  <p class="annual-note" id="annual-note">
+    파일 생성일: __CREATED_AT__ · 연식의 1월 1일~12월 31일을 기준으로 추정합니다 (1년 = 365.25일).<br>
+    중앙값 = (범위 최솟값 + 최댓값) ÷ 2, 1km/년 단위 반올림. 정렬과 필터는 중앙값 기준이며 입력한 경계값을 포함합니다.<br>
+    연식 미확인 또는 생성일이 해당 연식의 12월 31일 이전·당일이면 계산할 수 없으며, 필터 적용 시 제외합니다.
+  </p>
+</fieldset>
 <p class="hint">
   열 제목을 클릭하면 해당 항목 하나로 정렬됩니다. (다시 클릭하면 오름차순/내림차순 전환)<br>
   <kbd>Shift</kbd> 또는 <kbd>⌘</kbd> + 클릭하면 정렬 조건이 순서대로 <b>추가</b>됩니다.
@@ -154,6 +195,7 @@
   <th data-type="number">사고 횟수</th>
   <th data-type="number">평균 피해액</th>
   <th data-type="number">마일리지</th>
+  <th data-type="number" title="범위의 중앙값으로 정렬">연평균 마일리지</th>
   <th>링크</th>
 </tr>
 </thead>
@@ -161,6 +203,7 @@
 __ROWS__
 </tbody>
 </table>
+<p class="empty-state" id="empty-state" hidden>표시할 차량이 없습니다. 필터 범위를 조정해 보세요.</p>
 </div>
 <script>
 (function () {
@@ -170,6 +213,13 @@ __ROWS__
   var headers = Array.prototype.slice.call(table.querySelectorAll('thead th'));
   var rows = Array.prototype.slice.call(tbody.rows);
   var stateBox = document.getElementById('sort-state');
+  var minInput = document.getElementById('annual-min');
+  var maxInput = document.getElementById('annual-max');
+  var filterError = document.getElementById('filter-error');
+  var filterCount = document.getElementById('filter-count');
+  var emptyState = document.getElementById('empty-state');
+  var annualMin = null;
+  var annualMax = null;
 
   rows.forEach(function (row, idx) { row.dataset.origin = idx; });
 
@@ -244,14 +294,49 @@ __ROWS__
   function renderRows() {
     var sorted = rows.slice().sort(compare);
     var fragment = document.createDocumentFragment();
+    var visibleCount = 0;
+    var filtering = annualMin !== null || annualMax !== null;
     sorted.forEach(function (row) {
+      var value = row.querySelector('[data-annual-mileage]').dataset.annualMileage;
+      row.hidden = filtering && (value === '' ||
+        (annualMin !== null && Number(value) < annualMin) ||
+        (annualMax !== null && Number(value) > annualMax));
+      if (!row.hidden) visibleCount++;
       for (var i = 0; i < row.cells.length; i++) {
         row.cells[i].classList.toggle('sorted', keyIndex(i) !== -1);
       }
       fragment.appendChild(row);
     });
     tbody.appendChild(fragment);
+    filterCount.textContent = visibleCount + ' / ' + rows.length + '대 표시';
+    emptyState.hidden = visibleCount !== 0;
   }
+
+  function applyFilter() {
+    var min = minInput.value === '' ? null : minInput.valueAsNumber;
+    var max = maxInput.value === '' ? null : maxInput.valueAsNumber;
+    var invalidMin = !minInput.validity.valid;
+    var invalidMax = !maxInput.validity.valid;
+    var reversed = min !== null && max !== null && min > max;
+    minInput.setAttribute('aria-invalid', String(invalidMin || reversed));
+    maxInput.setAttribute('aria-invalid', String(invalidMax || reversed));
+    filterError.hidden = !invalidMin && !invalidMax && !reversed;
+    filterError.textContent = invalidMin || invalidMax
+      ? '0 이상의 정수를 입력해 주세요. 이전 필터를 유지합니다.'
+      : reversed ? '최소값은 최대값 이하여야 합니다. 이전 필터를 유지합니다.' : '';
+    if (!filterError.hidden) return;
+    annualMin = min;
+    annualMax = max;
+    renderRows();
+  }
+
+  minInput.addEventListener('input', applyFilter);
+  maxInput.addEventListener('input', applyFilter);
+  document.getElementById('filter-reset').addEventListener('click', function () {
+    minInput.value = '';
+    maxInput.value = '';
+    applyFilter();
+  });
 
   function render() {
     renderHeaders();
